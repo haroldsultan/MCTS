@@ -26,16 +26,16 @@ First 5 entries present the actions taken by Player1, second 5 entries present t
 Finally, I apply a reward function to this vector [5,97,3,5,1,32,56,87,101,8]
 """
 
+NUM_TURNS = 5
 
 class AntasState():
-    NUM_TURNS = 5
-    def __init__(self, current=[0,0,0,0,0,0,0,0,0,0],turn=0):
+    def __init__(self, current=[0]*2*NUM_TURNS,turn=0):
         self.current=current
 	self.turn=turn
 	self.num_moves=(114-self.turn)*(114-self.turn-1)
     def next_state(self):
 	availableActions=[x for x in range(1,115)]
-	for c in current:
+	for c in self.current:
 	    if c in availableActions:
 		availableActions.remove(c)
         player1action=random.choice(availableActions)
@@ -44,8 +44,8 @@ class AntasState():
     	nextcurrent[self.turn]=player1action
     	player2action=random.choice(availableActions)
 	availableActions.remove(player2action)
-    	nextcurrent[self.turn+self.NUM_TURNS]=player2action
-	next=State(current=nextcurrent,turn=self.turn+1)
+    	nextcurrent[self.turn+NUM_TURNS]=player2action
+	next=AntasState(current=nextcurrent,turn=self.turn+1)
 	return next
     def terminal(self):
 	if self.turn == NUM_TURNS:
@@ -71,7 +71,7 @@ if __name__=="__main__":
 	args=parser.parse_args()
 	
 	current_node=Node(AntasState())
-	for l in range(5):
+	for l in range(NUM_TURNS):
 		current_node=UCTSEARCH(args.num_sims/(l+1),current_node)
 		print("level %d"%l)
 		print("Num Children: %d"%len(current_node.children))

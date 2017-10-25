@@ -28,46 +28,50 @@ Finally, I apply a reward function to this vector [5,97,3,5,1,32,56,87,101,8]
 
 
 class AntasState():
-	NUM_TURNS = 5
-	def __init__(self, current=[0,0,0,0,0,0,0,0,0,0],availableOptions=[x for x in range(1,115)],turn=0):
-		self.current=current
-    self.availableOptions=availableOptions
-		self.turn=turn
-	def next_state(self):
-    player1action=random.choice(self.ACTIONS)
-    self.ACTIONS.remove(player1action)
-    self.current[self.turn]=player1action
-    player2action=random.choice(self.ACTIONS)
-    self.ACTIONS.remove(player2action)
-    self.current[self.turn+self.NUM_TURNS]=player2action
-    next=State(current=self.current,availableOptions=self.availableOptions,turn=self.turn+1)
-		return next
-	def terminal(self):
-		if self.turn == NUM_TURNS:
-			return True
-		return False
-	def reward(self):
-		r = random.uniform(0,1) #ANTAS, put your own function here
-		return r
-	def __hash__(self):
-		return int(hashlib.md5(str(self.current)).hexdigest(),16)
-	def __eq__(self,other):
-		if hash(self)==hash(other):
-			return True
-		return False
-	def __repr__(self):
-		s="CurrentState: %s; turn %d"%(self.state,self.turn)
-		return s
+    NUM_TURNS = 5
+    def __init__(self, current=[0,0,0,0,0,0,0,0,0,0],turn=0):
+        self.current=current
+	self.turn=turn
+	self.num_moves=(114-self.turn)*(114-self.turn-1)
+    def next_state(self):
+	availableActions=[x for x in range(1,115)]
+	for c in current:
+	    if c in availableActions:
+		availableActions.remove(c)
+        player1action=random.choice(availableActions)
+	availableActions.remove(player1action)
+   	nextcurrent=self.current[:]
+    	nextcurrent[self.turn]=player1action
+    	player2action=random.choice(availableActions)
+	availableActions.remove(player2action)
+    	nextcurrent[self.turn+self.NUM_TURNS]=player2action
+	next=State(current=nextcurrent,turn=self.turn+1)
+	return next
+    def terminal(self):
+	if self.turn == NUM_TURNS:
+	    return True
+	return False
+    def reward(self):
+	r = random.uniform(0,1) #ANTAS, put your own function here
+	return r
+    def __hash__(self):
+	return int(hashlib.md5(str(self.current)).hexdigest(),16)
+    def __eq__(self,other):
+	if hash(self)==hash(other):
+	    return True
+	return False
+    def __repr__(self):
+	s="CurrentState: %s; turn %d"%(self.current,self.turn)
+	return s
 
 
 if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='MCTS research code')
-	parser.add_argument('--num_sims', action="store", required=True, type=int)
-	parser.add_argument('--levels', action="store", required=True, type=int, choices=range(AntasState.NUM_TURNS))
+	parser.add_argument('--num_sims', action="store", required=True, type=int, help="Number of simulations to run, should be more than 114*113")
 	args=parser.parse_args()
 	
 	current_node=Node(AntasState())
-	for l in range(args.levels):
+	for l in range(5):
 		current_node=UCTSEARCH(args.num_sims/(l+1),current_node)
 		print("level %d"%l)
 		print("Num Children: %d"%len(current_node.children))

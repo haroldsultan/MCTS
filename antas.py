@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+import random
+import math
+import hashlib
+import logging
+import argparse
+from mcts import *
+
+"""
+Another game using MCTS.  based on a comment from 
+atanas1054 on Jun 27, 2017
+
+I want to have a 2-player game where they take turns. In the beginning there are 114 possible actions and they decrease by 1 every time a player makes a move. The game is played for 10 turns (that's the terminal state). I have my own function for the reward.
+
+Here is a sample game tree:
+
+START- available actions to both players -> [1,2,3,4,5,6....112,113,114]
+Player 1 - takes action 5 -> [5,0,0,0,0,0,0,0,0,0] -remove action 5 from available actions
+Player 2 - takes action 32->[5,0,0,0,0,32,0,0,0,0] - remove action 32 from the available actions
+Player 1- takes action 97 ->[5,97,0,0,0,32,0,0,0,0] - remove action 97 from the available actions
+Player 2 takes action 56 -> [5,97,0,0,0,32,56,0,0,0] - remove action 56 from the available actions
+....
+Final (example) game state after each player makes 5 actions -> [5,97,3,5,1,32,56,87,101,8]
+First 5 entries present the actions taken by Player1, second 5 entries present the actions taken by Player 2
+
+Finally, I apply a reward function to this vector [5,97,3,5,1,32,56,87,101,8]
+"""
+
+
+class AntasState():
+	NUM_TURNS = 5
+	def __init__(self, current=[0,0,0,0,0,0,0,0,0,0],availableOptions=[x for x in range(1,115)],turn=0):
+		self.current=current
+    self.availableOptions=availableOptions
+		self.turn=turn
+	def next_state(self):
+    player1action=random.choice(self.ACTIONS)
+    self.ACTIONS.remove(player1action)
+    self.current[self.turn]=player1action
+    player2action=random.choice(self.ACTIONS)
+    self.ACTIONS.remove(player2action)
+    self.current[self.turn+self.NUM_TURNS]=player2action
+    next=State(current=self.current,availableOptions=self.availableOptions,turn=self.turn+1)
+		return next
+	def terminal(self):
+		if self.turn == NUM_TURNS:
+			return True
+		return False
+	def reward(self):
+		r = random.uniform(0,1) #ANTAS, put your own function here
+		return r
+	def __hash__(self):
+		return int(hashlib.md5(str(self.current)).hexdigest(),16)
+	def __eq__(self,other):
+		if hash(self)==hash(other):
+			return True
+		return False
+	def __repr__(self):
+		s="CurrentState: %s; turn %d"%(self.state,self.turn)
+		return s
+
+
+if __name__=="__main__":
+	parser = argparse.ArgumentParser(description='MCTS research code')
+	parser.add_argument('--num_sims', action="store", required=True, type=int)
+	parser.add_argument('--levels', action="store", required=True, type=int, choices=range(AntasState.NUM_TURNS))
+	args=parser.parse_args()
+	
+	current_node=Node(AntasState())
+	for l in range(args.levels):
+		current_node=UCTSEARCH(args.num_sims/(l+1),current_node)
+		print("level %d"%l)
+		print("Num Children: %d"%len(current_node.children))
+		for i,c in enumerate(current_node.children):
+			print(i,c)
+		print("Best Child: %s"%current_node.state)
+		
+		print("--------------------------------")	

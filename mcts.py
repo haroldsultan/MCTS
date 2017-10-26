@@ -112,7 +112,7 @@ def BESTCHILD(node,scalar):
 	bestchildren=[]
 	for c in node.children:
 		exploit=c.reward/c.visits
-		explore=math.sqrt(math.log(2*node.visits)/float(c.visits))	
+		explore=math.sqrt(2.0*math.log(node.visits)/float(c.visits))	
 		score=exploit+scalar*explore
 		if score==bestscore:
 			bestchildren.append(c)

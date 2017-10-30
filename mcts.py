@@ -47,7 +47,7 @@ class State():
 		r = 1.0-(abs(self.value-self.GOAL)/self.MAX_VALUE)
 		return r
 	def __hash__(self):
-		return int(hashlib.md5(str(self.moves)).hexdigest(),16)
+		return int(hashlib.md5(str(self.moves).encode('utf-8')).hexdigest(),16)
 	def __eq__(self,other):
 		if hash(self)==hash(other):
 			return True
@@ -81,7 +81,7 @@ class Node():
 
 
 def UCTSEARCH(budget,root):
-	for iter in range(budget):
+	for iter in range(int(budget)):
 		if iter%10000==9999:
 			logger.info("simulation: %d"%iter)
 			logger.info(root)

@@ -91,11 +91,17 @@ def UCTSEARCH(budget,root):
 	return BESTCHILD(root,0)
 
 def TREEPOLICY(node):
+	#a hack to force 'exploitation' in a game where there are many options, and you may never/not want to fully expand first
 	while node.state.terminal()==False:
-		if node.fully_expanded()==False:	
+		if len(node.children)==0:
 			return EXPAND(node)
-		else:
+		elif random.uniform(0,1)<.5:
 			node=BESTCHILD(node,SCALAR)
+		else:
+			if node.fully_expanded()==False:	
+				return EXPAND(node)
+			else:
+				node=BESTCHILD(node,SCALAR)
 	return node
 
 def EXPAND(node):

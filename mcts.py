@@ -9,8 +9,8 @@ import argparse
 """
 A quick Monte Carlo Tree Search implementation.  For more details on MCTS see See http://pubs.doc.ic.ac.uk/survey-mcts-methods/survey-mcts-methods.pdf
 
-The State is just a game where you have NUM_TURNS and at turn i you can make
-a choice from [-2,2,3,-3]*i and this to to an accumulated value.  The goal is for the accumulated value to be as close to 0 as possible.
+The State is a game where you have NUM_TURNS and at turn i you can make
+a choice from an integeter [-2,2,3,-3]*(NUM_TURNS+1-i).  So for example in a game of 4 turns, on turn for turn 1 you can can choose from [-8,8,12,-12], and on turn 2 you can choose from [-6,6,9,-9].  At each turn the choosen number is accumulated into a aggregation value.  The goal of the game is for the accumulated value to be as close to 0 as possible.
 
 The game is not very interesting but it allows one to study MCTS which is.  Some features 
 of the example by design are that moves do not commute and early mistakes are more costly.  
@@ -144,7 +144,7 @@ def BACKUP(node,reward):
 if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='MCTS research code')
 	parser.add_argument('--num_sims', action="store", required=True, type=int)
-	parser.add_argument('--levels', action="store", required=True, type=int, choices=range(State.NUM_TURNS))
+	parser.add_argument('--levels', action="store", required=True, type=int, choices=range(State.NUM_TURNS+1))
 	args=parser.parse_args()
 	
 	current_node=Node(State())

@@ -70,8 +70,11 @@ class Node():
 	def update(self,reward):
 		self.reward+=reward
 		self.visits+=1
-	def fully_expanded(self):
-		if len(self.children)==self.state.num_moves:
+	def fully_expanded(self, num_moves_lambda):
+		num_moves = self.state.num_moves
+		if num_moves_lambda != None:
+		  num_moves = num_moves_lambda(self)
+		if len(self.children)==num_moves:
 			return True
 		return False
 	def __repr__(self):
@@ -80,17 +83,17 @@ class Node():
 		
 
 
-def UCTSEARCH(budget,root):
+def UCTSEARCH(budget,root,num_moves_lambda = None):
 	for iter in range(int(budget)):
 		if iter%10000==9999:
 			logger.info("simulation: %d"%iter)
 			logger.info(root)
-		front=TREEPOLICY(root)
+		front=TREEPOLICY(root, num_moves_lambda)
 		reward=DEFAULTPOLICY(front.state)
 		BACKUP(front,reward)
 	return BESTCHILD(root,0)
 
-def TREEPOLICY(node):
+def TREEPOLICY(node, num_moves_lambda):
 	#a hack to force 'exploitation' in a game where there are many options, and you may never/not want to fully expand first
 	while node.state.terminal()==False:
 		if len(node.children)==0:
@@ -98,7 +101,7 @@ def TREEPOLICY(node):
 		elif random.uniform(0,1)<.5:
 			node=BESTCHILD(node,SCALAR)
 		else:
-			if node.fully_expanded()==False:	
+			if node.fully_expanded(num_moves_lambda)==False:	
 				return EXPAND(node)
 			else:
 				node=BESTCHILD(node,SCALAR)

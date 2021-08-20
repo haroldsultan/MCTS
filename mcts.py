@@ -19,7 +19,7 @@ In particular there are two models of best child that one can use
 """
 
 #MCTS scalar.  Larger scalar will increase exploitation, smaller will increase exploration. 
-SCALAR=1/math.sqrt(2.0)
+SCALAR=1/(2*math.sqrt(2.0))
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger('MyLogger')
@@ -80,8 +80,6 @@ class Node():
 	def __repr__(self):
 		s="Node; children: %d; visits: %d; reward: %f"%(len(self.children),self.visits,self.reward)
 		return s
-		
-
 
 def UCTSEARCH(budget,root,num_moves_lambda = None):
 	for iter in range(int(budget)):
@@ -110,8 +108,8 @@ def TREEPOLICY(node, num_moves_lambda):
 def EXPAND(node):
 	tried_children=[c.state for c in node.children]
 	new_state=node.state.next_state()
-	while new_state in tried_children:
-		new_state=node.state.next_state()
+	while new_state in tried_children and new_state.terminal()==False:
+	    new_state=node.state.next_state()
 	node.add_child(new_state)
 	return node.children[-1]
 

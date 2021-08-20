@@ -4,6 +4,7 @@ import math
 import hashlib
 import logging
 import argparse
+from copy import deepcopy
 from mcts import *
 
 """
@@ -15,18 +16,18 @@ r1 = [0,1,2,3,4,5]
 r2 = [0,1,2,3,4,5]
 """
 
-NUM_TURNS = 5
+NUM_TURNS = 3
 
 class MancalaState():
-  def __init__(self,player1_points=0,player2_points=0,board=[[4,4,4,4,4,4],[4,4,4,4,4,4]]):
+  def __init__(self,player1_points=0,player2_points=0,board=[[4,4,4,4,4,4],[4,4,4,4,4,4]],played_moves=[]):
     self.player1_points = player1_points
     self.player2_points = player2_points
     self.board = board
     self.num_moves = 6
+    self.played_moves=played_moves
 
   def play2(self):
-    print("PLAYING 2")
-    print(self)
+    logger.info("PLAYING 2:: %s"%self)
     moves2 = []
     for ind,val in enumerate(self.board[1]):
       if val>0:
@@ -34,8 +35,9 @@ class MancalaState():
     if not moves2:
       return
     ind2,val2 = random.choice(moves2)
-    print("Moving %d,%d"%(ind2,val2))
-    lind = None
+    logger.info("Moving %d,%d"%(ind2,val2))
+    self.played_moves.append("PLAYER2: ind:%d,val:%d"%(ind2,val2))
+    lind = "NEGATIVE"
     #pickup 
     self.board[1][ind2]=0
     #play
@@ -53,7 +55,7 @@ class MancalaState():
       ind2+=1
       val2-=1
       self.board[0][ind2]+=1
-      lind = -ind2
+      lind = "NEGATIVE"
     if val2>0:
       ind2=6
     while val2>0 and ind2>0:
@@ -70,11 +72,11 @@ class MancalaState():
       ind2+=1
       val2-=1
       self.board[0][ind2]+=1
-      lind = -ind2
+      lind = "NEGATIVE"
     if lind == "HOME":
-      self.check_for_remaining()
-      self.play2()
-    elif lind > 0:
+      if self.check_for_remaining():
+        self.play2()
+    elif lind != "NEGATIVE":
       if self.board[1][lind]==1:
         captured = self.board[0][lind]
         self.player2_points += captured + 1
@@ -83,8 +85,7 @@ class MancalaState():
         self.check_for_remaining()
 
   def play1(self):
-    print("PLAYING 1")
-    print(self)
+    logger.info("PLAYING 1:: %s"%self)
     moves1 = []
     for ind,val in enumerate(self.board[0]):
       if val>0:
@@ -92,8 +93,9 @@ class MancalaState():
     if not moves1:
       return
     ind1,val1 = random.choice(moves1)
-    print("Moving %d,%d"%(ind1,val1))
-    lind = None
+    logger.info("Moving %d,%d"%(ind1,val1))
+    self.played_moves.append("PLAYER1: ind:%d,val:%d"%(ind1,val1))
+    lind = "NEGATIVE"
     #pickup 
     self.board[0][ind1]=0
     #play
@@ -111,7 +113,7 @@ class MancalaState():
       ind1-=1
       val1-=1
       self.board[1][ind1]+=1
-      lind = -ind1
+      lind = "NEGATIVE"
     if val1>0:
       ind1=-1
     while val1>0 and ind1<5:
@@ -128,11 +130,11 @@ class MancalaState():
       ind1-=1
       val1-=1
       self.board[1][ind1]+=1
-      lind = -ind1
+      lind = "NEGATIVE"
     if lind == "HOME":
-      self.check_for_remaining()
-      self.play1()
-    elif lind > 0:
+      if self.check_for_remaining():
+        self.play1()
+    elif lind != "NEGATIVE":
       if self.board[0][lind]==1:
         captured = self.board[1][lind]
         self.player1_points += captured + 1
@@ -147,17 +149,18 @@ class MancalaState():
       self.player1_points+=s1
       self.player2_points+=s2
       self.board=[[0,0,0,0,0,0],[0,0,0,0,0,0]]
+      return False
+    return True
 
   def next_state(self):
-    self.check_for_remaining()
-    self.play1()
-    self.check_for_remaining()
-    self.play2()
-    self.check_for_remaining()
-
-    return MancalaState(self.player1_points,self.player2_points,self.board)
+    if self.check_for_remaining():
+      self.play1()
+    if self.check_for_remaining():
+      self.play2()
+    return MancalaState(self.player1_points,self.player2_points,deepcopy(self.board),deepcopy(self.played_moves))
   
   def terminal(self):
+    self.check_for_remaining()
     p1_wins = self.player1_points>=25
     p2_wins = self.player2_points>=25
     if p1_wins or p2_wins:
@@ -181,7 +184,7 @@ class MancalaState():
     return hash(self)==hash(other)
 
   def __repr__(self):
-    return "CurrentState: %s; points1: %d, points2: %d"%(self.board,self.player1_points,self.player2_points)
+    return "CurrentState: %s; points1: %d, points2: %d\nplayed_moves:\n%s"%(self.board,self.player1_points,self.player2_points,"\n".join(self.played_moves))
 
 
 if __name__=="__main__":
@@ -190,12 +193,12 @@ if __name__=="__main__":
   args=parser.parse_args()
   
   current_node=Node(MancalaState())
+  num_moves_lambda = lambda node: len([x for x in node.state.board[0] if x>0])
   for l in range(NUM_TURNS):
-    num_moves_lambda = lambda node: len([x for x in node.state.board[0] if x>0])
     current_node=UCTSEARCH(args.num_sims/(l+1),current_node,num_moves_lambda)
     print("level %d"%l)
     print("Num Children: %d"%len(current_node.children))
     for i,c in enumerate(current_node.children):
-      print(i,c)
+      print(i,c,c.state.board)
     print("Best Child: %s"%current_node.state)
     print("--------------------------------")	

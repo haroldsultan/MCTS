@@ -127,7 +127,7 @@ def BESTCHILD(node,scalar):
 			bestchildren=[c]
 			bestscore=score
 	if len(bestchildren)==0:
-		logger.warn("OOPS: no best child found, probably fatal")
+		logger.warning("OOPS: no best child found, probably fatal")
 	return random.choice(bestchildren)
 
 def DEFAULTPOLICY(state):
